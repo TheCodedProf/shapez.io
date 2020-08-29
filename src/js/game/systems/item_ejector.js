@@ -2,12 +2,11 @@ import { globalConfig } from "../../core/config";
 import { DrawParameters } from "../../core/draw_parameters";
 import { createLogger } from "../../core/logging";
 import { Rectangle } from "../../core/rectangle";
-import { enumDirection, enumDirectionToVector, Vector } from "../../core/vector";
+import { enumDirection, enumDirectionToVector } from "../../core/vector";
 import { BaseItem } from "../base_item";
 import { ItemEjectorComponent } from "../components/item_ejector";
 import { Entity } from "../entity";
 import { GameSystemWithFilter } from "../game_system_with_filter";
-import { enumItemProcessorTypes } from "../components/item_processor";
 import { MapChunkView } from "../map_chunk_view";
 
 const logger = createLogger("systems/ejector");
@@ -223,6 +222,10 @@ export class ItemEjectorSystem extends GameSystemWithFilter {
                             globalConfig.itemSpacingOnBelts
                 );
 
+                if (G_IS_DEV && globalConfig.debug.disableEjectorProcessing) {
+                    sourceSlot.progress = 1.0;
+                }
+
                 // Check if we are still in the process of ejecting, can't proceed then
                 if (sourceSlot.progress < 1.0) {
                     continue;
@@ -285,16 +288,9 @@ export class ItemEjectorSystem extends GameSystemWithFilter {
 
         const itemProcessorComp = receiver.components.ItemProcessor;
         if (itemProcessorComp) {
-            // @todo HACK
-            // Check if there are pins, and if so if they are connected
-            if (itemProcessorComp.type === enumItemProcessorTypes.filter) {
-                const pinsComp = receiver.components.WiredPins;
-                if (pinsComp && pinsComp.slots.length === 1) {
-                    const network = pinsComp.slots[0].linkedNetwork;
-                    if (!network || !network.currentValue) {
-                        return false;
-                    }
-                }
+            // Check for potential filters
+            if (!this.root.systemMgr.systems.itemProcessor.checkRequirements(receiver, item, slotIndex)) {
+                return false;
             }
 
             // Its an item processor ..

@@ -123,6 +123,15 @@ export const autosaveIntervals = [
     },
 ];
 
+const refreshRateOptions = ["60", "75", "100", "120", "144", "165", "250", "500"];
+
+if (G_IS_DEV) {
+    refreshRateOptions.push("1000");
+    refreshRateOptions.push("2000");
+    refreshRateOptions.push("5000");
+    refreshRateOptions.push("10000");
+}
+
 /** @type {Array<BaseSetting>} */
 export const allApplicationSettings = [
     new EnumSetting("language", {
@@ -243,6 +252,7 @@ export const allApplicationSettings = [
     }),
 
     new BoolSetting("alwaysMultiplace", enumCategories.advanced, (app, value) => {}),
+    new BoolSetting("clearCursorOnDeleteWhilePlacing", enumCategories.advanced, (app, value) => {}),
     new BoolSetting("enableTunnelSmartplace", enumCategories.advanced, (app, value) => {}),
     new BoolSetting("vignette", enumCategories.userInterface, (app, value) => {}),
     new BoolSetting("compactBuildingInfo", enumCategories.userInterface, (app, value) => {}),
@@ -250,7 +260,7 @@ export const allApplicationSettings = [
     new BoolSetting("rotationByBuilding", enumCategories.advanced, (app, value) => {}),
 
     new EnumSetting("refreshRate", {
-        options: ["60", "75", "100", "120", "144", "165", "250", "500"],
+        options: refreshRateOptions,
         valueGetter: rate => rate,
         textGetter: rate => rate + " Hz",
         category: enumCategories.performance,
@@ -289,6 +299,7 @@ class SettingsStorage {
         this.compactBuildingInfo = false;
         this.disableCutDeleteWarnings = false;
         this.rotationByBuilding = true;
+        this.clearCursorOnDeleteWhilePlacing = true;
 
         this.enableColorBlindHelper = false;
 
@@ -495,7 +506,7 @@ export class ApplicationSettings extends ReadWriteProxy {
     }
 
     getCurrentVersion() {
-        return 21;
+        return 22;
     }
 
     /** @param {{settings: SettingsStorage, version: number}} data */
@@ -586,6 +597,11 @@ export class ApplicationSettings extends ReadWriteProxy {
         if (data.version < 21) {
             data.settings.lowQualityTextures = false;
             data.version = 21;
+        }
+
+        if (data.version < 22) {
+            data.settings.clearCursorOnDeleteWhilePlacing = true;
+            data.version = 22;
         }
 
         return ExplainedResult.good();

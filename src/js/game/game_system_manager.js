@@ -20,6 +20,8 @@ import { ConstantSignalSystem } from "./systems/constant_signal";
 import { LogicGateSystem } from "./systems/logic_gate";
 import { LeverSystem } from "./systems/lever";
 import { DisplaySystem } from "./systems/display";
+import { ItemProcessorOverlaysSystem } from "./systems/item_processor_overlays";
+import { BeltReaderSystem } from "./systems/belt_reader";
 
 const logger = createLogger("game_system_manager");
 
@@ -84,6 +86,12 @@ export class GameSystemManager {
             /** @type {DisplaySystem} */
             display: null,
 
+            /** @type {ItemProcessorOverlaysSystem} */
+            itemProcessorOverlays: null,
+
+            /** @type {BeltReaderSystem} */
+            beltReader: null,
+
             /* typehints:end */
         };
         this.systemUpdateOrder = [];
@@ -137,11 +145,14 @@ export class GameSystemManager {
         // IMPORTANT: We have 2 phases: In phase 1 we compute the output values of all gates,
         // processors etc. In phase 2 we propagate it through the wires network
         add("logicGate", LogicGateSystem);
+        add("beltReader", BeltReaderSystem);
 
         // Wires must be after all gate, signal etc logic!
         add("wire", WireSystem);
 
         add("display", DisplaySystem);
+
+        add("itemProcessorOverlays", ItemProcessorOverlaysSystem);
 
         logger.log("📦 There are", this.systemUpdateOrder.length, "game systems");
     }
